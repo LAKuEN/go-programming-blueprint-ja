@@ -1,0 +1,60 @@
+<html>
+    <head>
+        <title>Chat</title>
+        <style>
+        input {
+            display: block;
+        }
+        ul {
+            list-style: none;
+        }
+        </style>
+    </head>
+    <body>
+        ChatApp with WebSocket
+        <form id="chatbox">
+            <textarea></textarea>
+            <input type="submit" value="Submit" />
+        </form>
+        <ul id="messages"></ul>
+        <!--templateを使っているのでファイル分割できない-->
+        <script>
+        let socket = null;
+        const form = document.getElementById("chatbox"), 
+          msgBox = document.querySelector("#chatbox > textarea"),
+          messages = document.getElementById("messages");
+
+        form.addEventListener("submit", (ev) => {
+          ev.preventDefault();
+          if (!msgBox.value) {
+            return false;
+          }
+          if (!socket) {
+            alert("Error: There is no connection with WebSocket");
+            return false;
+          }
+          socket.send(msgBox.value);
+          msgBox.value = "";
+
+          return false;
+        });
+
+        if (!window["WebSocket"]) {
+          let msg = "Error: You are using a browser that WebSocket is not available";
+          throw new Error(msg);
+        }
+        // html/templateによって置換
+        // r(=http.Request).Hostで置き換える
+        socket = new WebSocket("ws://{{.Host}}/room");
+        socket.addEventListener("close", (ev) => {
+          console.log("Disconnected");
+        });
+        socket.addEventListener("message", (ev) => {
+          newMsg = document.createElement("li");
+          newMsg.textContent = ev.data;
+
+          messages.appendChild(newMsg);
+        });
+        </script>
+    </body>
+</html>
