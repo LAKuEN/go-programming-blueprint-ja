@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/stretchr/gomniauth"
+	"github.com/stretchr/objx"
 )
 
 type authHandler struct {
@@ -37,7 +38,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	case "login":
 		provider, err := gomniauth.Provider(provider)
 		if err != nil {
-			log.Fatalf("Failed to get auth provider: %v-%v", provider, err)
+			log.Fatalf("Failed to get authentication provider: %v-%v", provider, err)
 		}
 		loginURL, err := provider.GetBeginAuthURL(nil, nil)
 		if err != nil {
@@ -45,9 +46,34 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Header().Set("Location", loginURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
+	case "callback":
+		// 認証~ユーザ情報の取得
+		provider, err := gomniauth.Provider(provider)
+		if err != nil {
+			log.Fatalf("Failed to get authentication provider: %v-%v", provider, err)
+		}
+		creds, err := provider.CompleteAuth(objx.MustFromURLQuery(r.URL.RawQuery))
+		if err != nil {
+			log.Fatalf("Couldn't finish authentication: %v", err)
+		}
+		user, err := provider.GetUser(creds)
+		if err != nil {
+			log.Fatalf("Couldn't get user information: %v", err)
+		}
+		// Cookieに情報を格納
+		authCookieValue := objx.New(map[string]interface{}{
+			"name": user.Name(),
+		}).MustBase64()
+		http.SetCookie(w, &http.Cookie{
+			Name:  "auth",
+			Value: authCookieValue,
+			Path:  "/",
+		})
+
+		w.Header()["Location"] = []string{"/chat"}
+		w.WriteHeader(http.StatusTemporaryRedirect)
 	default:
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, "Not defined action: %v", action)
 	}
-
 }

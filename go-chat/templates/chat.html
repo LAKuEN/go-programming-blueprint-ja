@@ -13,6 +13,7 @@
     <body>
         ChatApp with WebSocket
         <form id="chatbox">
+            <p>{{.UserData.name}}</p>
             <textarea></textarea>
             <input type="submit" value="Submit" />
         </form>
@@ -33,7 +34,7 @@
             alert("Error: There is no connection with WebSocket");
             return false;
           }
-          socket.send(msgBox.value);
+          socket.send(JSON.stringify({"Message": msgBox.value}));
           msgBox.value = "";
 
           return false;
@@ -50,8 +51,17 @@
           console.log("Disconnected");
         });
         socket.addEventListener("message", (ev) => {
+          data = JSON.parse(ev.data);
+          nameElm = document.createElement("strong");
+          nameElm.textContent = data.Name;
+          whenElm = document.createElement("span");
+          whenElm.textContent = "(" + data.When + ")"
+          msgElm = document.createElement("span");
+          msgElm.textContent = ": " + data.Message;
           newMsg = document.createElement("li");
-          newMsg.textContent = ev.data;
+          newMsg.appendChild(nameElm);
+          newMsg.appendChild(whenElm);
+          newMsg.appendChild(msgElm);
 
           messages.appendChild(newMsg);
         });

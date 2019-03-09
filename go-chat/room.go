@@ -8,10 +8,11 @@ import (
 
 	"github.com/LAKuEN/go-programming-blueprint-ja/go-chat/trace"
 	"github.com/gorilla/websocket"
+	"github.com/stretchr/objx"
 )
 
 type room struct {
-	forward chan []byte
+	forward chan *message
 	join    chan *client
 	leave   chan *client
 	clients map[*client]bool // 操作する際にはjoin, leaveを介して操作
@@ -32,7 +33,7 @@ func (r *room) run() {
 			r.tracer.Trace("A user has left.")
 		case msg := <-r.forward:
 			r.tracer.Trace(fmt.Sprintf("A message received: %v",
-				string(msg)))
+				msg.Message))
 			for client := range r.clients {
 				select {
 				case client.send <- msg:
@@ -63,10 +64,17 @@ func (r *room) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		log.Fatalf("Error occured at ServeHTTP: %#v", err)
 	}
+
+	authCookie, err := req.Cookie("auth")
+	if err != nil {
+		log.Fatalf("Failed to get cookie: %v", err)
+		return
+	}
 	client := &client{
-		socket: socket,
-		send:   make(chan []byte, messageBufferSize),
-		room:   r,
+		socket:   socket,
+		send:     make(chan *message, messageBufferSize),
+		room:     r,
+		userData: objx.MustFromBase64(authCookie.Value),
 	}
 	r.join <- client
 	defer func() {
@@ -88,7 +96,7 @@ func newRoom(logging bool) *room {
 		tracer = trace.Off()
 	}
 	return &room{
-		forward: make(chan []byte),
+		forward: make(chan *message),
 		join:    make(chan *client),
 		leave:   make(chan *client),
 		clients: make(map[*client]bool),
