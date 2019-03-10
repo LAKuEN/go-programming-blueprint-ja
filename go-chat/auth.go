@@ -25,18 +25,22 @@ func (h *authHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// MustAuth はhttp.Handlerインタフェースに適合したハンドラをラップしたハンドラを返却する
 func MustAuth(handler http.Handler) http.Handler {
 	return &authHandler{next: handler}
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	segs := strings.Split(r.URL.Path, "/")
+	if len(segs) < 4 {
+		panic(fmt.Errorf("Specified invalid URI: %v", r.URL.Path))
+	}
 	action := segs[2]
-	provider := segs[3]
+	providerName := segs[3]
 
 	switch action {
 	case "login":
-		provider, err := gomniauth.Provider(provider)
+		provider, err := gomniauth.Provider(providerName)
 		if err != nil {
 			log.Fatalf("Failed to get authentication provider: %v-%v", provider, err)
 		}
@@ -47,20 +51,22 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Location", loginURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
 	case "callback":
-		// 認証~ユーザ情報の取得
-		provider, err := gomniauth.Provider(provider)
+		provider, err := gomniauth.Provider(providerName)
 		if err != nil {
 			log.Fatalf("Failed to get authentication provider: %v-%v", provider, err)
 		}
-		creds, err := provider.CompleteAuth(objx.MustFromURLQuery(r.URL.RawQuery))
+		authCode := objx.MustFromURLQuery(r.URL.RawQuery)
+		// 認可コード -> アクセストークン
+		creds, err := provider.CompleteAuth(authCode)
 		if err != nil {
 			log.Fatalf("Couldn't finish authentication: %v", err)
 		}
+		// アクセストークン -> ユーザ情報
 		user, err := provider.GetUser(creds)
 		if err != nil {
 			log.Fatalf("Couldn't get user information: %v", err)
 		}
-		// Cookieに情報を格納
+		// ユーザ情報 -> Cookie
 		authCookieValue := objx.New(map[string]interface{}{
 			"name": user.Name(),
 		}).MustBase64()
