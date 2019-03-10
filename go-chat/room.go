@@ -22,7 +22,7 @@ type room struct {
 func (r *room) run() {
 	for {
 		// NOTE case節のコードが同時に実行されることはない
-		// これによりr.clientsへの同時操作が起こるのを防いでいる
+		// -> r.clientsへの同時操作が起こるのを防いでいる
 		select {
 		case client := <-r.join:
 			r.clients[client] = true

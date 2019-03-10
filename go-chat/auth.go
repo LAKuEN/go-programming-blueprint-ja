@@ -68,7 +68,8 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		// ユーザ情報 -> Cookie
 		authCookieValue := objx.New(map[string]interface{}{
-			"name": user.Name(),
+			"name":       user.Name(),
+			"avatar_url": user.AvatarURL(), // アバター画像の格納先はサービスに依って異なるが、gomniauthが差異を吸収してくれる
 		}).MustBase64()
 		http.SetCookie(w, &http.Cookie{
 			Name:  "auth",

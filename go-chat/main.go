@@ -50,7 +50,21 @@ func main() {
 
 	http.Handle("/chat", MustAuth(&templateHandler{filename: "chat.html"}))
 	http.Handle("/login", &templateHandler{filename: "login.html"})
-	http.HandleFunc("/auth/", loginHandler)
+	http.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
+		// Cookieの削除
+		// MaxAgeを-1にすると即座に削除されるが、ブラウザに依って削除されないケースがあるので
+		// 空文字列をはめ込む
+		http.SetCookie(w, &http.Cookie{
+			Name:   "auth",
+			Value:  "",
+			Path:   "/",
+			MaxAge: -1,
+		})
+
+		w.Header()["Location"] = []string{"/chat"}
+		w.WriteHeader(http.StatusTemporaryRedirect)
+	})
+	http.HandleFunc("/auth/", loginHandler) // 末尾に/をつけると接頭辞として扱われる
 
 	r := newRoom(*logging)
 	http.Handle("/room", r)

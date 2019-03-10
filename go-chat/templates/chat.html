@@ -15,10 +15,11 @@
         <form id="chatbox">
             <p>{{.UserData.name}}</p>
             <textarea></textarea>
-            <input type="submit" value="Submit" />
+            <input type="submit" value="Submit" /><a href="/logout">Sign out</a>
         </form>
         <ul id="messages"></ul>
-        <!--templateを使っているのでファイル分割できない-->
+        <!--jsファイルへのリクエストのhandlerを用意すればファイルを読み込むことは可能
+            テンプレート文字列を置換して読み込むか、jsの関数を呼び出して必要な文字列をはめ込む-->
         <script>
         let socket = null;
         const form = document.getElementById("chatbox"), 
@@ -52,13 +53,24 @@
         });
         socket.addEventListener("message", (ev) => {
           data = JSON.parse(ev.data);
+
+          avatarElm = document.createElement("img");
+          avatarElm.title = data.Name;  // imgにカーソルを合わせた際に表示する文字列を指定
+          avatarElm.style.width = 50;
+          avatarElm.style.verticalAlign = "middle";
+          avatarElm.src = data.AvatarURL;
+
           nameElm = document.createElement("strong");
           nameElm.textContent = data.Name;
+
           whenElm = document.createElement("span");
           whenElm.textContent = "(" + data.When + ")"
+
           msgElm = document.createElement("span");
           msgElm.textContent = ": " + data.Message;
+
           newMsg = document.createElement("li");
+          newMsg.appendChild(avatarElm);
           newMsg.appendChild(nameElm);
           newMsg.appendChild(whenElm);
           newMsg.appendChild(msgElm);
