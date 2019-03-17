@@ -16,6 +16,12 @@ import (
 	"github.com/stretchr/objx"
 )
 
+var avatars Avatar = TryAvatars{
+	UseFileSystemAvatar,
+	UseAuthAvatar,
+	UseGravatar,
+}
+
 type templateHandler struct {
 	once     sync.Once
 	filename string
@@ -65,6 +71,9 @@ func main() {
 		w.WriteHeader(http.StatusTemporaryRedirect)
 	})
 	http.HandleFunc("/auth/", loginHandler) // 末尾に/をつけると接頭辞として扱われる
+	http.Handle("/upload", &templateHandler{filename: "upload.html"})
+	http.HandleFunc("/uploader", uploaderHandler)
+	http.Handle("/avatars/", http.StripPrefix("/avatars/", http.FileServer(http.Dir("./avatars"))))
 
 	r := newRoom(*logging)
 	http.Handle("/room", r)

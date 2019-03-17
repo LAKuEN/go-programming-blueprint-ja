@@ -1,0 +1,15 @@
+<html>
+    <head>
+        <title>Upload</title>
+    </head>
+
+    <body>
+        <form role="form" action="/uploader" enctype="multipart/form-data" method="post">
+            <input type="hidden" name="userid" value="{{.UserData.userid}}" />
+            <div class="form-group">
+                <input type="file" name="avatarFile" />
+            </div>
+            <input type="submit" value="Upload" class="btn " />
+        </form>
+    </body>
+</html>

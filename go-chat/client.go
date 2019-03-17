@@ -20,8 +20,7 @@ func (c *client) read() {
 		if err := c.socket.ReadJSON(&msg); err == nil {
 			msg.When = time.Now()
 			msg.Name = c.userData["name"].(string)
-			// キーが存在しない場合にinterface{}.(string)が実行されるのを防ぐ
-			// -> キーが存在しない場合に実行するとRuntime Error
+			// msg.AvatarURL, _ = c.room.avatar.GetAvatarURL(c)
 			if avatarURL, ok := c.userData["avatar_url"]; ok {
 				msg.AvatarURL = avatarURL.(string)
 			}

@@ -2,3 +2,4 @@ go-chat
 vendor
 security_key
 client_secret*.json
+avatars/
