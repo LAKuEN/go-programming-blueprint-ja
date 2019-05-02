@@ -1,5 +1,13 @@
 go-chat
 vendor
+api_key
 security_key
 client_secret*.json
 avatars/
+domainify/domainify
+domainfinder/domainfinder
+domainfinder/lib
+sprinkle/sprinkle
+synonyms/synonyms
+available/available
+main
